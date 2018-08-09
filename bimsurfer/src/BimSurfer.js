@@ -167,7 +167,7 @@ define(["./Notifier", "./BimServerModel", "./PreloadQuery", "./BimServerGeometry
                             function () {
                                 if (!fired) {
                                     fired = true;
-                                    var vmodel = new Model(params.api, model);
+                                    var vmodel = new Model(model);
 
                                     self._loadModel(vmodel);
 
@@ -194,29 +194,29 @@ define(["./Notifier", "./BimServerModel", "./PreloadQuery", "./BimServerGeometry
                     }
                     oidToGuid[n.id] = n.guid;
                     guidToOid[n.guid] = n.id;
-                    
+
                     for (var i = 0; i < (n.children || []).length; ++i) {
                         visit(n.children[i]);
                     }
                 };
 
                 visit(tree);
-                
+
                 self._idMapping.toGuid.push(oidToGuid);
                 self._idMapping.toId.push(guidToOid);
-                
+
                 var models = {};
 
                 // TODO: Ugh. Undecorate some of the newly created classes
-                models[model.model.roid] = model.model;
+                models[model.apiModel.roid] = model.apiModel;
 
                 // Notify viewer that things are loading, so viewer can
                 // reduce rendering speed and show a spinner.
                 viewer.taskStarted();
 
-                viewer.createModel(model.model.roid);
+                viewer.createModel(model.apiModel.roid);
 
-                var loader = new GeometryLoader(model.api, models, viewer);
+                var loader = new GeometryLoader(model.api, viewer, model, model.apiModel.roid);
 
                 loader.addProgressListener(function (progress, nrObjectsRead, totalNrObjects) {
 					if (progress == "start") {
@@ -229,7 +229,7 @@ define(["./Notifier", "./BimServerModel", "./PreloadQuery", "./BimServerGeometry
 					}
                 });
 
-                loader.setLoadOids([model.model.roid], oids);
+                loader.setLoadOids(oids);
 
                 // viewer.clear(); // For now, until we support multiple models through the API
 
