@@ -1,6 +1,6 @@
 window.BIMSERVER_VERSION = "1.5";
 
-define(["./Notifier", "./BimServerModel", "./PreloadQuery", "./BimServerGeometryLoader", "./xeoViewer/xeoViewer", "./EventHandler"], function (Notifier, Model, PreloadQuery, GeometryLoader, xeoViewer, EventHandler, _BimServerApi) {
+define(["./Notifier", "./BimServerModel", "./BimServerModelLoader", "./PreloadQuery", "./BimServerGeometryLoader", "./xeoViewer/xeoViewer", "./EventHandler"], function (Notifier, Model, ModelLoader, PreloadQuery, GeometryLoader, xeoViewer, EventHandler, _BimServerApi) {
 	
     // Backwards compatibility
     var BimServerApi;
@@ -47,7 +47,6 @@ define(["./Notifier", "./BimServerModel", "./PreloadQuery", "./BimServerGeometry
          * @param params
          */
         this.load = function (params) {
-
             if (params.test) {
                 viewer.loadRandom(params);
                 return null;
@@ -154,120 +153,8 @@ define(["./Notifier", "./BimServerModel", "./PreloadQuery", "./BimServerGeometry
         };
 
         this._loadFromAPI = function (params) {
-
-            return new Promise(function (resolve, reject) {
-
-                params.api.getModel(params.poid, params.roid, params.schema, false,
-                    function (model) {
-
-                        // TODO: Preload not necessary combined with the bruteforce tree
-                        var fired = false;
-
-                        model.query(PreloadQuery,
-                            function () {
-                                if (!fired) {
-                                    fired = true;
-                                    var vmodel = new Model(model);
-
-                                    self._loadModel(vmodel);
-
-                                    resolve(vmodel);
-                                }
-                            });
-                    });
-            });
-        };
-
-        this._loadModel = function (model) {
-        
-            model.getTree().then(function (tree) {
-
-                var oids = [];
-                var oidToGuid = {};
-                var guidToOid = {};
-
-                var visit = function (n) {
-                    if (BIMSERVER_VERSION == "1.4") {
-                        oids.push(n.id);
-                    } else {
-                        oids[n.gid] = n.id;
-                    }
-                    oidToGuid[n.id] = n.guid;
-                    guidToOid[n.guid] = n.id;
-
-                    for (var i = 0; i < (n.children || []).length; ++i) {
-                        visit(n.children[i]);
-                    }
-                };
-
-                visit(tree);
-
-                self._idMapping.toGuid.push(oidToGuid);
-                self._idMapping.toId.push(guidToOid);
-
-                var models = {};
-
-                // TODO: Ugh. Undecorate some of the newly created classes
-                models[model.apiModel.roid] = model.apiModel;
-
-                // Notify viewer that things are loading, so viewer can
-                // reduce rendering speed and show a spinner.
-                viewer.taskStarted();
-
-                viewer.createModel(model.apiModel.roid);
-
-                var loader = new GeometryLoader(model.api, viewer, model, model.apiModel.roid);
-
-                loader.addProgressListener(function (progress, nrObjectsRead, totalNrObjects) {
-					if (progress == "start") {
-						console.log("Started loading geometries");
-						self.fire("loading-started");
-					} else if (progress == "done") {
-						console.log("Finished loading geometries (" + totalNrObjects + " objects received)");
-						self.fire("loading-finished");
-                        viewer.taskFinished();
-					}
-                });
-
-                loader.setLoadOids(oids);
-
-                // viewer.clear(); // For now, until we support multiple models through the API
-
-                viewer.on("tick", function () { // TODO: Fire "tick" event from xeoViewer
-                    loader.process();
-                });
-
-                loader.start();
-            });
-        };
-        
-        // Helper function to traverse over the mappings for individually loaded models
-        var _traverseMappings = function(mappings) {
-            return function(k) {
-                for (var i = 0; i < mappings.length; ++i) {
-                    var v = mappings[i][k];
-                    if (v) return v;
-                }
-                return null;
-            }
-        };
-
-        /**
-         * Returns a list of object ids (oid) for the list of guids (GlobalId)
-         *
-         * @param guids List of globally unique identifiers from the IFC model
-         */
-        this.toId = function(guids) {
-            return guids.map(_traverseMappings(self._idMapping.toId));
-        };
-
-        /**
-         * Returns a list of guids (GlobalId) for the list of object ids (oid) 
-         *
-         * @param ids List of internal object ids from the BIMserver / glTF file
-         */
-        this.toGuid = function(ids) {
-            return ids.map(_traverseMappings(self._idMapping.toGuid));
+            var modelLoader = new ModelLoader(params.api, self);
+            return modelLoader.loadFullModel(params.api.getModel(params.poid, params.roid, params.schema, false));
         };
 
         /**

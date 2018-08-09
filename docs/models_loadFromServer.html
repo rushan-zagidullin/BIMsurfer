@@ -16,35 +16,31 @@
     	import("http://localhost:8082/apps/bimserverjavascriptapi/bimserverclient.js").then((bimserverapi) => {
     		console.log(bimserverapi);
     		
-    		var api = new bimserverapi.default("http://localhost:8082");
-            window.BimServerClient = bimserverapi.default;
-    		api.init((api, info) => {
-    			console.log(api, info);
-    		});
-            require([
-                "bimsurfer/src/BimSurfer"
-            ], function (BimSurfer) {
-                window.bimSurfer = new BimSurfer({
-                    domNode: "fullPageContainer"
-                });
-                bimSurfer.load({
-                    bimserver: "http://localhost:8082",
-                    username: "admin@admin.com",
-                    password: "admin",
-                    poid: 4784129,
-                    roid: 11534339,
-                    schema: "ifc2x3tc1" // < TODO: Deduce automatically
-                })
-                        .then(function (model) {
-                            console.info('loaded model:', model);
-                            model.getTree().then(function (tree) {
-                                console.info('tree:', tree)
-                            });
-                            // Model is now loaded and rendering.
-                            // The following sections show what you can do with BIMSurfer at this point.
-                            //...
+    		window.BimServerClient = bimserverapi.default;
+            require(
+                ["bimsurfer/src/BimSurfer"],
+                function (BimSurfer) {
+                    window.bimSurfer = new BimSurfer({
+                        domNode: "fullPageContainer"
+                    });
+                    bimSurfer.load({
+                        bimserver: "http://localhost:8082",
+                        username: "admin@example.org",
+                        password: "admin",
+                        poid: 4784129,
+                        roid: 11534339,
+                        schema: "ifc2x3tc1" // < TODO: Deduce automatically
+                    }).then(function (model) {
+                        console.info('loaded model:', model);
+                        model.getTree().then(function (tree) {
+                            console.info('tree:', tree)
                         });
-            });
+                        // Model is now loaded and rendering.
+                        // The following sections show what you can do with BIMSurfer at this point.
+                        //...
+                    });
+                }
+            );
         });
     </script>
 
