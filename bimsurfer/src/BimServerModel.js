@@ -44,7 +44,7 @@ define(["../lib/text"], function(text) {
                     resolve(self.tree);
                 }    
 				
-				var query = 
+				/*var query = 
 					{
 						defines:{
 							Representation:{
@@ -112,10 +112,10 @@ define(["../lib/text"], function(text) {
 		            	}, {
 		            		type:"IfcPresentationLayerAssignment"
 		            	}]
-					};
+					};*/
 				
                 // Perform the download
-				apiModel.query(query, function(o) {}).done(function(){
+				//apiModel.query(query, function(o) {}).done(function(){
 					
 					// A list of entities that define parent-child relationships
 					var entities = {
@@ -212,7 +212,7 @@ define(["../lib/text"], function(text) {
 					}})();
 					
 					resolve(self.tree = fold(data.map(make_element)));
-				});
+				//});
             }));
         };
         

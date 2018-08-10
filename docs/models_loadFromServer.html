@@ -27,17 +27,11 @@
                         bimserver: "http://localhost:8082",
                         username: "admin@example.org",
                         password: "admin",
-                        poid: 4784129,
-                        roid: 11534339,
+                        poid: 196609,
+                        roid: 196611,
                         schema: "ifc2x3tc1" // < TODO: Deduce automatically
                     }).then(function (model) {
-                        console.info('loaded model:', model);
-                        model.getTree().then(function (tree) {
-                            console.info('tree:', tree)
-                        });
-                        // Model is now loaded and rendering.
-                        // The following sections show what you can do with BIMSurfer at this point.
-                        //...
+                        
                     });
                 }
             );
